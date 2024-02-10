@@ -21,17 +21,26 @@ def fetch_and_insert_data():
         sheetData = sheet.get_all_values()
 
         # Get existing IDs from the database
-        existing_ids = list(ShagufTask.objects.values_list('id', flat=True))
-
-        # Insert new data into the database
+        existing_ids = set(ShagufTask.objects.values_list('id', flat=True))
+        
+        # Insert or update data into the database
         data = sheetData[1:]  # Skip the header row
         for row in data:
-            # Check if the ID already exists in the database
-            if row[0] not in existing_ids:
+            # Check if the record with the same ID exists in the database
+            existing_task = ShagufTask.objects.filter(id=row[0]).first()
+            if existing_task:
+                # Update existing record with new data
+                existing_task.name = row[1]
+                existing_task.city = row[2]
+                existing_task.revenue = row[3]
+                existing_task.save()
+                print(f"Data Updated for ID: {row[0]}")
+            else:
                 # Insert new row into the database
                 ShagufTask.objects.create(id=row[0], name=row[1], city=row[2], revenue=row[3])
-                # Update existing IDs list
-                existing_ids.append(row[0])
+                print(f"Data Inserted for ID: {row[0]}")
+       
     except Exception as e:
         # Handle exceptions
         print(f"An error occurred: {str(e)}")
+
